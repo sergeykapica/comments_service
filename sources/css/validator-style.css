@@ -1,0 +1,81 @@
+.validator-error, .validator-success {
+    position: absolute;
+    top: 0;
+    right: -220%;
+    margin-right: -25px;
+    width: 100%;
+    min-height: 100%;
+    padding: 5px 10px 5px 45px;
+    text-align: left;
+    border-radius: .25rem;
+}
+
+.validator-error {
+    background-color: #e89b9b;
+    border: 1px solid #de2f2f;
+    color: #de2f2f;
+}
+
+.validator-success {
+    background-color: #7ed680;
+    border: 1px solid #3a943b;
+    color: #3a943b;
+}
+
+.validator-error-icon, .validator-success-icon {
+    position: absolute;
+    top: 5px;
+    left: 10px;
+    width: 25px;
+    height: 25px;
+}
+
+.validator-error-icon {
+    background: url(../images/sprite-icons/validator-error.png) no-repeat center;
+    background-size: 25px;
+}
+
+.validator-success-icon {
+    background: url(../images/sprite-icons/validator-success.png) no-repeat center;
+    background-size: 35px;
+}
+
+.validator-error::before, .validator-success::before {
+    position: absolute;
+    top: 50%;
+    margin-top: -19px;
+    left: -9.5px;
+    width: 0;
+    height: 0;
+    content: "";
+    border-top: 19px solid transparent;
+    border-bottom: 19px solid transparent;
+}
+
+.validator-error::before {
+    border-right: 9.5px solid #de2f2f;
+}
+
+.validator-success::before {
+    border-right: 9.5px solid #3a943b;
+}
+
+.validator-error::after, .validator-success::after {
+    position: absolute;
+    top: 50%;
+    margin-top: -19px;
+    left: -8.5px;
+    width: 0;
+    height: 0;
+    content: "";
+    border-top: 19px solid transparent;
+    border-bottom: 19px solid transparent;
+}
+
+.validator-error::after {
+    border-right: 9.5px solid #e89b9b;
+}
+
+.validator-success::after {
+    border-right: 9.5px solid #7ed680;
+}
