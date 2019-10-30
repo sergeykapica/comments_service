@@ -25,6 +25,7 @@ html, body {
     margin: 0 auto;
     background: url(../images/admin-panel/authorizate-background.jpg) no-repeat center;
     background-size: cover;
+    background-attachment: fixed;
     overflow: hidden;
     word-wrap: break-word;
 }
@@ -54,7 +55,7 @@ html, body {
 }
 
 .admin-panel-head {
-    padding: 10px 20px;
+    padding: 10px 20px 10px 20px;
     background-color: rgba(123, 101, 128, 0.5);
     border-bottom: 4px solid rgba(123, 101, 128);
 }
@@ -308,4 +309,74 @@ html, body {
     min-height: 0;
     right: 0;
     margin-bottom: 20px;
+}
+
+.comments-actions-wrapper {
+    display: table;
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 0 1rem;
+}
+
+.comments-actions-wrapper > button {
+    white-space: pre;
+}
+
+.actions-wrapper-blocks {
+    display: table-cell;
+}
+
+.actions-result-message {
+    position: relative;
+    width: 100%;
+    padding-left: 2%;
+    overflow: hidden;
+}
+
+.actions-result-message .validator-error {
+    right: -100%;
+}
+
+.action-result {
+    right: 0 !important;
+}
+
+#comments-delete-form {
+    display: inline-block;
+}
+
+.pagination-wrapper {
+    text-align: center;
+}
+
+.pagination {
+    display: inline-flex !important;
+}
+
+.panel-head-controls {
+    position: relative;
+    padding-right: 3rem;
+}
+
+.admin-logout-button {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 3rem;
+    height: 3rem;
+    background: url(../images/admin-panel/admin-logout.png) no-repeat left;
+    background-size: 6rem;
+    border: none;
+    outline: none;
+    text-decoration: none;
+}
+
+.admin-logout-button:hover {
+    background-position: -3rem;
+}
+
+.admin-logout-button:focus {
+    border: none;
+    outline: none;
 }

@@ -11,7 +11,9 @@ function getUrlHandlers()
         'admin_authorizate_handler',
         'admin_panel',
         'admin_comment_detail',
-        'admin_comment_edit_handler'
+        'admin_comment_edit_handler',
+        'admin_comments_delete_handler',
+        'admin_logout'
 	);
 	
 	return $urlHandler;

@@ -25,7 +25,7 @@
                         <div class="head-data head-data-headline"><?=$comment['USER_NAME'];?></div>
                         <div class="head-data head-data-date"><?=date('d.m.Y H:i:s', $comment['COMMENT_DATE']);?></div>
                     </div>
-                    <button class="comments-reply-button btn btn-info">
+                    <button data-comment-id="<?=$comment['ID'];?>" class="comments-reply-button btn btn-info">
                         <div class="comments-reply-text">Цитировать</div>
                         <div class="comments-reply-icon"></div>
                     </button>
@@ -46,8 +46,44 @@
                         <?endforeach;?>
                     </div>
                 <?endif;?>
+                
+                <?// reply comments list one level ?>
+
+                <?if(isset($comment['REPLY_COMMENTS_LIST'])):?>
+                    <div class="reply-comments-wrapper">
+                        <?foreach($comment['REPLY_COMMENTS_LIST'] as $replyComment):?>
+                            <section class="comments-item">
+                                <div class="comments-item-head">
+                                    <div class="comments-icon rounded-circle" style="background-image: url(<?=( $replyComment['USER_PHOTO'] != '' ? '/sources/images/users-images/' . $replyComment['USER_PHOTO'] : '/sources/images/users-images/default.png' );?>);"></div>
+                                    <div class="comments-head-data">
+                                        <div class="head-data head-data-headline"><?=$replyComment['USER_NAME'];?></div>
+                                        <div class="head-data head-data-date"><?=date('d.m.Y H:i:s', $replyComment['COMMENT_DATE']);?></div>
+                                    </div>
+                                </div>
+                                <div class="comments-item-content"><?=$replyComment['USER_COMMENT_TEXT'];?></div>
+
+                                <?
+                                    if($comment['USER_ATTACHMENT_PHOTOS'] !== '')
+                                    {
+                                        $comment['USER_ATTACHMENT_PHOTOS'] = explode(',', $replyComment['USER_ATTACHMENT_PHOTOS']);
+                                    }
+                                ?>
+
+                                <?if(is_array($replyComment['USER_ATTACHMENT_PHOTOS'])):?>
+                                    <div class="comments-attachment-photos">
+                                        <?foreach($replyComment['USER_ATTACHMENT_PHOTOS'] as $photoKey => $photoValue):?>
+                                                <div class="comments-attachment-photo <?=( ( ( $photoKey + 1 ) % 2 ) !== 0 ? 'attachment-photo-indentation' : '' );?>" style="background-image: url(/sources/images/other-images/<?=trim($photoValue);?>);"></div>
+                                        <?endforeach;?>
+                                    </div>
+                                <?endif;?>
+                            </section>
+                        <?endforeach;?>
+                    </div>
+                <?endif;?>
             </section>
         <?endforeach;?>
+        <div class="clear-fix-separator"></div>
+        <?=$arResult['PAGINATION_STRING'];?>
     <?else:?>
         <div class="comments-list-empty">Комментарии отсутствуют</div>
     <?endif;?>
@@ -128,6 +164,7 @@
 
 <script type="text/javascript" src="/sources/js/validate-form.js"></script>
 <script type="text/javascript" src="/sources/js/upload-and-send-data-ajax.js"></script>
+<script type="text/javascript" src="/sources/js/move-to-element.js"></script>
 
 <script type="text/javascript">
     $(window).ready(function()
@@ -256,26 +293,85 @@
                         });
                     }, 3000);
                     
-                    let commentsList = $('.comments-list');
-                    let comment =
-                    `
-                    <section class="comments-item">
-                        <div class="comments-item-head">
-                            <div class="comments-icon rounded-circle" style="background-image: url(` + result.ADDED_COMMENT.USER_PHOTO + `);"></div>
-                            <div class="comments-head-data">
-                                <div class="head-data head-data-headline">` + result.ADDED_COMMENT.USER_NAME + `</div>
-                                <div class="head-data head-data-date">` + result.ADDED_COMMENT.COMMENT_DATE + `</div>
-                            </div>
-                            <button class="comments-reply-button btn btn-info">
-                                <div class="comments-reply-text">Цитировать</div>
-                                <div class="comments-reply-icon"></div>
-                            </button>
-                        </div>
-                        <div class="comments-item-content">` + result.ADDED_COMMENT.USER_COMMENT_TEXT + `</div>
-                    </section>
-                    `;
+                    let attachmentPhotoList = '<div class="comments-attachment-photos">';
                     
-                    commentsList.prepend(comment);
+                    for(var p in result.ADDED_COMMENT.USER_ATTACHMENT_PHOTOS)
+                    {
+                        let k = ( parseInt(p) + 1 );
+                        let indentation = ( ( k % 2 ) != 0 ? 'attachment-photo-indentation' : '' );
+                        
+                        attachmentPhotoList +=
+                        `
+                        <div class="comments-attachment-photo ` + indentation + `" style="background-image: url(` + result.ADDED_COMMENT.USER_ATTACHMENT_PHOTOS[p] + `);"></div>
+                        `;
+                    }
+                    
+                    attachmentPhotoList += '</div>';
+                    
+                    let commentsList = $('.comments-list');
+                    
+                    let replyCommentID = thisForm.find('#reply-message-id');
+                    
+                    if(replyCommentID[0] === undefined)
+                    {
+                        /*let comment =
+                        `
+                        <section class="comments-item">
+                            <div class="comments-item-head">
+                                <div class="comments-icon rounded-circle" style="background-image: url(` + result.ADDED_COMMENT.USER_PHOTO + `);"></div>
+                                <div class="comments-head-data">
+                                    <div class="head-data head-data-headline">` + result.ADDED_COMMENT.USER_NAME + `</div>
+                                    <div class="head-data head-data-date">` + result.ADDED_COMMENT.COMMENT_DATE + `</div>
+                                </div>
+                                <button class="comments-reply-button btn btn-info">
+                                    <div class="comments-reply-text">Цитировать</div>
+                                    <div class="comments-reply-icon"></div>
+                                </button>
+                            </div>
+                            <div class="comments-item-content">` + result.ADDED_COMMENT.USER_COMMENT_TEXT + `</div>
+                            ` + attachmentPhotoList + `
+                        </section>
+                        `;
+
+                        commentsList.prepend(comment);*/
+                    }
+                    else
+                    {
+                        let comment =
+                        `
+                        <section class="comments-item">
+                            <div class="comments-item-head">
+                                <div class="comments-icon rounded-circle" style="background-image: url(` + result.ADDED_COMMENT.USER_PHOTO + `);"></div>
+                                <div class="comments-head-data">
+                                    <div class="head-data head-data-headline">` + result.ADDED_COMMENT.USER_NAME + `</div>
+                                    <div class="head-data head-data-date">` + result.ADDED_COMMENT.COMMENT_DATE + `</div>
+                                </div>
+                            </div>
+                            <div class="comments-item-content">` + result.ADDED_COMMENT.USER_COMMENT_TEXT + `</div>
+                            ` + attachmentPhotoList + `
+                        </section>
+                        `;
+                        
+                        let replyCommentIDButton = $('button.comments-reply-button[data-comment-id=' + replyCommentID.val() + ']');
+                        
+                        while(!replyCommentIDButton.hasClass('comments-item'))
+                        {
+                            replyCommentIDButton = replyCommentIDButton.parent();
+                        }
+                        
+                        let replyCommentsWrapper = replyCommentIDButton.find('.reply-comments-wrapper');
+                        
+                        if(replyCommentsWrapper[0] !== undefined)
+                        {
+                            replyCommentsWrapper.prepend(comment);
+                        }
+                        else
+                        {
+                            replyCommentsWrapper = '<div class="reply-comments-wrapper">' + comment + '</div>';
+                            
+                            replyCommentIDButton.append(replyCommentsWrapper);
+                        }
+                    }
                     
                     // set elements to default status
                     
@@ -337,6 +433,29 @@
             {
                 getSortAssortedComments('date', commentsList);
             }
+        });
+        
+        let commentsReplyButton = $('.comments-reply-button');
+        
+        commentsReplyButton.on('click', function()
+        {
+            let thisButton = $(this);
+            let replyMessageID = commentsForm.find('#reply-message-id');
+            
+            if(replyMessageID[0] !== undefined)
+            {
+                replyMessageID.remove();
+            }
+            
+            let replyMessageIDElement = document.createElement('input');
+            replyMessageIDElement.type = 'hidden';
+            replyMessageIDElement.id = 'reply-message-id';
+            replyMessageIDElement.name = 'REPLY_COMMENT_ID';
+            replyMessageIDElement.value = thisButton.attr('data-comment-id');
+            
+            commentsForm.append(replyMessageIDElement);
+            
+            moveToElement($(document.documentElement || document.body), commentsForm, 1000);
         });
     });
 </script>

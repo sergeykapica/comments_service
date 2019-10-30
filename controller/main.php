@@ -36,13 +36,56 @@ class ControllerUrls
     
 	public function get_index_page($page)
 	{
-        require_once($_SERVER['DOCUMENT_ROOT'] . '/model/DBObject.php');
+        require_once($_SERVER['DOCUMENT_ROOT'] . '/misc_functions/pagination.php');
         
-        $DBObject = new \DBObjectScope\DBObject;
         $arResult = array();
-        $arResult['COMMENTS_LIST'] = $DBObject->getCommentsList();
+        $arResult['CURRENT_PAGE'] = '/' . preg_replace('/\?.+/', '', $this->oDataHandlers->stringCleanFromXSS($page));
         
-		$this->renderingPage($page, 'Главная', $arResult);
+        if(isset($_GET['N']))
+        {
+            $n = $this->oDataHandlers->stringCleanFromXSS($_GET['N']);
+        }
+        else
+        {
+            $n = 1;
+        }
+        
+        $elementsOnPage = 5;
+        
+        if(!isset($_GET['SORT_BY']))
+        {
+            $oPagination = new Pagination($n, $elementsOnPage, $arResult['CURRENT_PAGE'], 5);
+            $paginationString = $oPagination->getPaginationString('getMainCommentsWithPagination', false, array('COMMENT_STATUS' => 1));
+        }
+        else
+        {
+            $oPagination = new Pagination($n, $elementsOnPage, '/index', 5);
+            $sortBy = $this->oDataHandlers->stringCleanFromXSS($_GET['SORT_BY']);
+            $paginationString = $oPagination->getPaginationString('getMainCommentsWithPagination', $sortBy, array('COMMENT_STATUS' => 1));
+        }
+        
+        if($paginationString)
+        {
+            $mainCommentsList = array();
+            
+            foreach($paginationString['PAGINATION_ELEMENTS'] as $comment)
+            {
+                $mainCommentsList[$comment['ID']] = $comment;
+            }
+
+            $DBObject = new \DBObjectScope\DBObject;
+            $replyCommentList = $DBObject->getReplyCommentsList(array_keys($mainCommentsList));
+            
+            foreach($replyCommentList as $replyComment)
+            {
+                $mainCommentsList[$replyComment['REPLY_COMMENT_ID']]['REPLY_COMMENTS_LIST'][] = $replyComment;
+            }
+            
+            $arResult['COMMENTS_LIST'] = $mainCommentsList;
+            $arResult['PAGINATION_STRING'] = $paginationString['PAGINATION_STRING'];
+
+            $this->renderingPage($page, 'Главная', $arResult);
+        }
 	}
     
     public function get_ajax_comment_add_handler_page()
@@ -125,7 +168,18 @@ class ControllerUrls
                         $commentsListAddedFields['USER_ATTACHMENT_PHOTOS'] = $attachmentImages;
                     }
                     
-                    if($DBObject->insertToCommentsList($commentsListAddedFields))
+                    if(isset($_POST['REPLY_COMMENT_ID']))
+                    {
+                        $commentsListAddedFields['REPLY_COMMENT_ID'] = $this->oDataHandlers->stringCleanFromXSS($_POST['REPLY_COMMENT_ID']);
+                        
+                        $addToDB = $DBObject->insertToReplyCommentsList($commentsListAddedFields);
+                    }
+                    else
+                    {
+                        $addToDB = $DBObject->insertToCommentsList($commentsListAddedFields);
+                    }
+                    
+                    if($addToDB)
                     {
                         foreach($commentsListAddedFields as $fieldName => $fieldValue)
                         {
@@ -177,15 +231,48 @@ class ControllerUrls
     {
         if(isset($_GET['SORT_BY']))
         {
-            $sortBy = $this->oDataHandlers->stringCleanFromXSS($_GET['SORT_BY']);
-            
-            require_once($_SERVER['DOCUMENT_ROOT'] . '/model/DBObject.php');
-        
-            $DBObject = new \DBObjectScope\DBObject;
+            require_once($_SERVER['DOCUMENT_ROOT'] . '/misc_functions/pagination.php');
+
             $arResult = array();
-            $arResult['COMMENTS_LIST'] = $DBObject->getCommentsList($sortBy);
-            
-            $this->renderingAjaxPage($page, $arResult);
+            $arResult['CURRENT_PAGE'] = '/' . preg_replace('/\?.+/', '', $this->oDataHandlers->stringCleanFromXSS($page));
+            $sortBy = $this->oDataHandlers->stringCleanFromXSS($_GET['SORT_BY']);
+
+            if(isset($_GET['N']))
+            {
+                $n = $this->oDataHandlers->stringCleanFromXSS($_GET['N']);
+            }
+            else
+            {
+                $n = 1;
+            }
+
+            $elementsOnPage = 5;
+
+            $oPagination = new Pagination($n, $elementsOnPage, '/index', 5);
+            $paginationString = $oPagination->getPaginationString('getMainCommentsWithPagination', $sortBy, array('COMMENT_STATUS' => 1));
+
+            if($paginationString)
+            {
+                $mainCommentsList = array();
+
+                foreach($paginationString['PAGINATION_ELEMENTS'] as $comment)
+                {
+                    $mainCommentsList[$comment['ID']] = $comment;
+                }
+
+                $DBObject = new \DBObjectScope\DBObject;
+                $replyCommentList = $DBObject->getReplyCommentsList(array_keys($mainCommentsList));
+
+                foreach($replyCommentList as $replyComment)
+                {
+                    $mainCommentsList[$replyComment['REPLY_COMMENT_ID']]['REPLY_COMMENTS_LIST'][] = $replyComment;
+                }
+
+                $arResult['COMMENTS_LIST'] = $mainCommentsList;
+                $arResult['PAGINATION_STRING'] = $paginationString['PAGINATION_STRING'];
+
+                $this->renderingAjaxPage($page, $arResult);
+            }
         }
     }
     
@@ -229,13 +316,37 @@ class ControllerUrls
     
     public function get_admin_panel_page($page)
     {
-        require_once($_SERVER['DOCUMENT_ROOT'] . '/model/DBObject.php');
+        require_once($_SERVER['DOCUMENT_ROOT'] . '/misc_functions/pagination.php');
         
-        $DBObject = new \DBObjectScope\DBObject;
         $arResult = array();
-        $arResult['COMMENTS_LIST'] = $DBObject->getCommentsList();
+        $arResult['CURRENT_PAGE'] = '/' . preg_replace('/\?.+/', '', $this->oDataHandlers->stringCleanFromXSS($page));
         
-        $this->renderingAdminPanelPage($page, 'Админ панель', $arResult);
+        if(isset($_GET['N']))
+        {
+            $n = $this->oDataHandlers->stringCleanFromXSS($_GET['N']);
+        }
+        else
+        {
+            $n = 1;
+        }
+        
+        $elementsOnPage = 5;
+        
+        $oPagination = new Pagination($n, $elementsOnPage, $arResult['CURRENT_PAGE'], 5);
+        $paginationString = $oPagination->getPaginationString('getAllCommentsWithPagination');
+        
+        if($paginationString)
+        {
+            $arResult['COMMENTS_LIST'] = $paginationString['PAGINATION_ELEMENTS'];
+            $arResult['PAGINATION_STRING'] = $paginationString['PAGINATION_STRING'];
+
+            if(isset($_GET['DELETE_COMMENTS']))
+            {
+                $arResult['DELETE_COMMENTS'] = $this->oDataHandlers->stringCleanFromXSS($_GET['DELETE_COMMENTS']);
+            }
+
+            $this->renderingAdminPanelPage($page, 'Админ панель', $arResult);
+        }
     }
     
     public function get_admin_comment_detail_page($page)
@@ -301,6 +412,43 @@ class ControllerUrls
                 die();
             }
         }
+    }
+    
+    public function get_admin_comments_delete_handler_page()
+    {
+        if($_SERVER['REQUEST_METHOD'] == 'POST')
+        {
+            require_once($_SERVER['DOCUMENT_ROOT'] . '/model/DBObject.php');
+
+            $DBObject = new \DBObjectScope\DBObject;
+            
+            $commentsID = $_POST['COMMENT_ID'];
+            $currentPage = $this->oDataHandlers->stringCleanFromXSS($_POST['CURRENT_PAGE']);
+            
+            foreach($commentsID as &$ID)
+            {
+                $ID = $this->oDataHandlers->stringCleanFromXSS($ID);
+            }
+            
+            if($DBObject->deleteCommentsByIDs($commentsID))
+            {
+                header('Location: ' . $currentPage . '?DELETE_COMMENTS=1');
+                die();
+            }
+            else
+            {
+                header('Location: ' . $currentPage . '?DELETE_COMMENTS=0');
+                die();
+            }
+        }
+    }
+    
+    public function get_admin_logout_page($page)
+    {
+        session_destroy();
+        
+        header('Location: /admin_authorizate');
+        die();
     }
     
     public function renderingPage($page, $title, $arResult = false)
